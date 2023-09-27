@@ -8,6 +8,10 @@ class PessoaSchema(BaseModel):
     cpf: str = "12345678901"
     nome: str = "Edson Sousa"
     telefone: str = "21984483515"
+    cep: str = "25540260"
+    bairro: str = "Coelho da Rocha"
+    cidade: str = "São João de Meriti"
+    uf: str = "RJ"
 
 
 class PessoaBuscaPorNomeSchema(BaseModel):
@@ -34,6 +38,10 @@ def apresenta_pessoas(pessoas: List[Pessoa]):
             "cpf": pessoa.cpf,
             "nome": pessoa.nome,
             "telefone": pessoa.telefone,
+            "cep": pessoa.cep,
+            "bairro": pessoa.bairro,
+            "cidade": pessoa.cidade,
+            "uf": pessoa.uf,            
         })
 
     return {"pessoas": result}
@@ -46,7 +54,10 @@ class PessoaViewSchema(BaseModel):
     cpf: str = "12345678901"
     nome: str = "Edson Sousa"
     telefone: str = "21984483515"
-    #aki comentarios:List[ComentarioSchema]
+    cep: str = "25540260"
+    bairro: str = "Coelho da Rocha"
+    cidade: str = "São João de Meriti"
+    uf: str = "RJ"
 
 
 class PessoaDelSchema(BaseModel):
@@ -65,4 +76,26 @@ def apresenta_pessoa(pessoa: Pessoa):
         "cpf": pessoa.cpf,
         "nome": pessoa.nome,
         "telefone": pessoa.telefone,
+        "cep": pessoa.cep,
+        "bairro": pessoa.bairro,
+        "cidade": pessoa.cidade,
+        "uf": pessoa.uf,            
+    }
+
+class PessoaBuscaPorCEPSchema(BaseModel):
+    """ Define como deve ser a estrutura que representa a busca. 
+    
+    Que será feita apenas com base no CEP da pessoa.
+    """
+    cep: str = "CEP para ser buscado"
+
+def apresenta_cep(pessoa: Pessoa):
+    """ Retorna uma representação do cep seguindo o schema definido em
+        CepViewSchema.
+    """
+    return {
+        "cep": pessoa.cep,
+        "bairro": pessoa.bairro,
+        "cidade": pessoa.cidade,
+        "uf": pessoa.uf,            
     }

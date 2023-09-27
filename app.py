@@ -1,3 +1,4 @@
+import requests
 from flask_openapi3 import OpenAPI, Info, Tag
 from flask import redirect
 from urllib.parse import unquote
@@ -9,13 +10,16 @@ from logger import logger
 from schemas import *
 from flask_cors import CORS
 
-info = Info(title="Minha API Financeira", version="1.0.0")
+from schemas.pessoa import PessoaBuscaPorCEPSchema
+
+info = Info(title="Meu cadastro Pessoal", version="1.0.0")
 app = OpenAPI(__name__, info=info)
 CORS(app)
 
 # definindo tags
-home_tag = Tag(name="Documentação", description="Documentação feita com Swagger")
+home_tag   = Tag(name="Documentação", description="Documentação feita com Swagger")
 pessoa_tag = Tag(name="Pessoa", description="Adição, visualização e remoção de uma pessoa na base")
+cep_tag    = Tag(name="CEP", description="Busca do CEP digitado via microserviço")
 #movimento_tag = Tag(name="Movimento", description="Adição de um valor de débito ou crédito para pessoa cadastrada na base")
 
 
@@ -31,12 +35,16 @@ def home():
 def add_pessoa(form: PessoaSchema):
     """Adiciona uma pessoa na base de dados
 
-    Retorna uma representação das pessoal e seu saldo.
+    Retorna uma representação das pessoal.
     """
     pessoa = Pessoa(
         nome=form.nome,
         telefone=form.telefone,
-        cpf=form.cpf)
+        cpf=form.cpf,
+        cep=form.cep,
+        bairro=form.bairro,
+        cidade=form.cidade,
+        uf=form.uf)
     logger.debug(f"Adicionando pessoa de nome: '{pessoa.nome}'")
     try:
         # criando conexão com a base
@@ -76,7 +84,7 @@ def get_pessoas():
 
     if not pessoas:
         # se não há pessoas cadastradas
-        return {"pessos": []}, 200
+        return {"pessoas": []}, 200
     else:
         logger.debug(f"%d pessoas encontradas" % len(pessoas))
         # retorna a representação de pessoa
@@ -133,4 +141,35 @@ def del_pessoa(query: PessoaBuscaPorNomeSchema):
         # se a pessoa não foi encontrada
         error_msg = "Pessoa não encontrada na base :/"
         logger.warning(f"Erro ao deletar pessoa #'{pessoa_nome}', {error_msg}")
+        return {"mesage": error_msg}, 404
+
+
+#busca cep
+@app.get('/cep', tags=[cep_tag],
+         responses={"200": PessoaBuscaPorCEPSchema, "404": ErrorSchema})
+
+def get_cep(query: PessoaBuscaPorCEPSchema):
+    """Faz a busca por CEP
+
+    Retorna uma lista com bairro, cidade e UF.
+    """
+    cep = query.cep
+
+    cep = cep.replace("-", "").replace(".", "").replace(" ", "")
+
+    if len(cep) == 8:
+        link = f'https://viacep.com.br/ws/{cep}/json/'
+
+        requisicao = requests.get(link)
+
+        dic_requisicao = requisicao.json()
+
+        logger.debug(f"CEP encontrado: '{cep}'")
+        # retorna a representação do cep
+        return dic_requisicao, 200
+
+    else:
+        # se o CEP não conter 8 números
+        error_msg = "CEP Inválido :/"
+        logger.warning(f"Erro ao buscar CEP '{cep}', {error_msg}")
         return {"mesage": error_msg}, 404
